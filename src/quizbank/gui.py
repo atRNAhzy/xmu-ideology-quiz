@@ -25,13 +25,20 @@ from PyQt5.QtWidgets import (
 from .question_bank import QuestionBank, QuestionSelection
 from .utils import answers_match, letters_to_string, normalize_answers, parse_options_text
 
+DEFAULT_WINDOW_SIZE = QSize(1024, 640)
+DEFAULT_FONT_POINT_SIZE = 13
+BASE_LOGICAL_DPI = 96.0
+
 
 class QuizWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("题库练习")
-        self.resize(800, 500)
-        self._base_size = self.size()
+        base_font = QFont(self.font())
+        base_font.setPointSize(DEFAULT_FONT_POINT_SIZE)
+        self.setFont(base_font)
+        self.resize(DEFAULT_WINDOW_SIZE)
+        self._base_size = QSize(DEFAULT_WINDOW_SIZE)
 
         self.app_root = self._resolve_app_root()
         self.quiz_dir = self.app_root / "题库"
@@ -513,9 +520,27 @@ class QuizWindow(QMainWindow):
     def _current_scale_factor(self) -> float:
         if self._base_size.width() <= 0 or self._base_size.height() <= 0:
             return 1.0
+
         width_factor = self.width() / float(self._base_size.width())
         height_factor = self.height() / float(self._base_size.height())
-        return max(1.0, width_factor, height_factor)
+        size_factor = max(1.0, width_factor, height_factor)
+
+        dpi_ratio = self._current_dpi_ratio()
+        if dpi_ratio <= 0:
+            dpi_ratio = 1.0
+
+        return max(1.0, size_factor / dpi_ratio)
+
+    def _current_dpi_ratio(self) -> float:
+        screen = None
+        handle = self.windowHandle()
+        if handle is not None:
+            screen = handle.screen()
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        if screen is None:
+            return 1.0
+        return screen.logicalDotsPerInch() / BASE_LOGICAL_DPI
 
 
 def run_gui() -> None:
