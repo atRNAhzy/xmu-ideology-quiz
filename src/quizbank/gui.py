@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .question_bank import QuestionBank, QuestionSelection
-from .utils import answers_match, letters_to_string, normalize_answers, parse_options_text
+from .utils import answers_match, normalize_answers, parse_options_text
 
 DEFAULT_WINDOW_SIZE = QSize(1024, 640)
 DEFAULT_FONT_POINT_SIZE = 13
@@ -322,6 +322,14 @@ class QuizWindow(QMainWindow):
         self.answer_input.setPlaceholderText("按回车进入下一题，或输入重新作答")
         self.answer_input.setFocus()
 
+    def _mark_correct_answers(self, expected_letters: list[str]) -> None:
+        if not self.option_checkboxes:
+            return
+        for letter, checkbox in self.option_checkboxes.items():
+            checkbox.blockSignals(True)
+            checkbox.setChecked(letter in expected_letters)
+            checkbox.blockSignals(False)
+
     def _collect_checked_letters(self) -> list[str] | None:
         if self.bank is None or self.current_selection is None:
             QMessageBox.information(self, "提示", "请先选择题库。")
@@ -341,7 +349,8 @@ class QuizWindow(QMainWindow):
             return
 
         is_correct = answers_match(user_letters, self.current_selection.answer)
-        correct_letters = letters_to_string(self.current_selection.answer)
+        expected_letters = normalize_answers(self.current_selection.answer)
+        correct_text = "".join(expected_letters) if expected_letters else self.current_selection.answer
 
         if is_correct:
             if not self.current_recorded:
@@ -355,11 +364,10 @@ class QuizWindow(QMainWindow):
                     self.feedback_label.text() + " 已达到阈值，可以切换下一题。"
                 )
         else:
-            self.feedback_label.setText(
-                f"回答错误，正确答案是：{correct_letters or self.current_selection.answer}"
-            )
-        display_letters = " ".join(correct_letters) if correct_letters else self.current_selection.answer
+            self.feedback_label.setText(f"回答错误，正确答案是：{correct_text}")
+        display_letters = " ".join(expected_letters) if expected_letters else correct_text
         self.correct_answer_label.setText(f"正确答案：{display_letters}")
+        self._mark_correct_answers(expected_letters)
         self._refresh_status()
         self._prepare_for_next_input()
 
