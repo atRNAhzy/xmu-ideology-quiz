@@ -1,0 +1,6 @@
+﻿name: quizbank
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+prefix: D:\miniconda3\envs\quizbank
