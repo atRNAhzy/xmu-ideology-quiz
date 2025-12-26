@@ -146,8 +146,7 @@ class QuizWindow(QMainWindow):
         self.option_checkboxes: dict[str, QCheckBox] = {}
         self.correct_answer_label.setText("正确答案：")
         self.threshold_input.setText(str(self.threshold_value))
-        self._cache_base_fonts()
-        self._apply_scaled_fonts()
+        # 不再对字体进行缩放，缩放仅调整布局
 
     def _resolve_app_root(self) -> Path:
         if getattr(sys, "frozen", False):
@@ -195,7 +194,7 @@ class QuizWindow(QMainWindow):
         self.status_label.setText("")
 
         self.bank_combo.blockSignals(False)
-        self._apply_scaled_fonts()
+        
 
     def handle_bank_selected(self, index: int) -> None:
         data = self.bank_combo.itemData(index)
@@ -238,7 +237,7 @@ class QuizWindow(QMainWindow):
         self.reset_button.setEnabled(True)
         self.threshold_input.setText(str(self.bank.max_correct))
         self.load_next_question()
-        self._apply_scaled_fonts()
+        
 
     def load_next_question(self) -> None:
         if self.bank is None:
@@ -275,7 +274,7 @@ class QuizWindow(QMainWindow):
         self.question_label.setText(self.current_selection.prompt)
         _, options = parse_options_text(self.current_selection.options)
         self._populate_options(options)
-        self._apply_scaled_fonts()
+        
 
     def _populate_options(self, options: list[tuple[str, str]]) -> None:
         self._clear_options()
@@ -292,7 +291,7 @@ class QuizWindow(QMainWindow):
             self.options_layout.addWidget(checkbox)
             self.option_checkboxes[letter] = checkbox
         self.options_layout.addStretch(1)
-        self._apply_scaled_fonts()
+        
 
     def _clear_options(self) -> None:
         while self.options_layout.count():
@@ -451,104 +450,9 @@ class QuizWindow(QMainWindow):
 
     def resizeEvent(self, event) -> None:  # pylint: disable=invalid-name
         super().resizeEvent(event)
-        self._apply_scaled_fonts()
+        # 缩放仅影响布局，无需调整字体
 
-    def _cache_base_fonts(self) -> None:
-        self._base_fonts = {
-            "question": self.question_label.font(),
-            "option": self.font(),
-            "input": self.answer_input.font(),
-            "label": self.feedback_label.font(),
-            "button": self.submit_button.font(),
-            "combo": self.bank_combo.font(),
-            "group": self.options_box.font(),
-            "correct_label": self.correct_answer_label.font(),
-        }
-
-    def _apply_scaled_fonts(self) -> None:
-        if not hasattr(self, "_base_fonts"):
-            return
-
-        factor = self._current_scale_factor()
-
-        question_font = self._scaled_font("question", 14.0, factor)
-        self.question_label.setFont(question_font)
-
-        option_font = self._scaled_font("option", 12.0, factor)
-        for checkbox in self.option_checkboxes.values():
-            checkbox.setFont(option_font)
-        for index in range(self.options_layout.count()):
-            widget = self.options_layout.itemAt(index).widget()
-            if isinstance(widget, QLabel):
-                widget.setFont(option_font)
-
-        group_font = self._scaled_font("group", 12.0, factor)
-        self.options_box.setFont(group_font)
-
-        label_font = self._scaled_font("label", 12.0, factor)
-        for widget in (
-            self.feedback_label,
-            self.status_label,
-            self.file_label,
-            self.bank_label,
-            self.threshold_label,
-        ):
-            widget.setFont(label_font)
-
-        correct_label_font = self._scaled_font("correct_label", 12.0, factor)
-        self.correct_answer_label.setFont(correct_label_font)
-
-        input_font = self._scaled_font("input", 12.0, factor)
-        self.answer_input.setFont(input_font)
-        self.threshold_input.setFont(input_font)
-
-        combo_font = self._scaled_font("combo", 12.0, factor)
-        self.bank_combo.setFont(combo_font)
-        combo_view = self.bank_combo.view()
-        if combo_view is not None:
-            combo_view.setFont(combo_font)
-
-        button_font = self._scaled_font("button", 12.0, factor)
-        for button in (self.submit_button, self.next_button, self.reset_button):
-            button.setFont(button_font)
-
-    def _scaled_font(self, key: str, minimum: float, factor: float) -> QFont:
-        base_font = getattr(self, "_base_fonts", {}).get(key)
-        if base_font is None:
-            base_font = self.font()
-        font = QFont(base_font)
-        base_size = font.pointSizeF()
-        if base_size <= 0:
-            base_size = float(font.pointSize())
-        if base_size <= 0:
-            base_size = minimum
-        font.setPointSizeF(max(minimum, base_size * factor))
-        return font
-
-    def _current_scale_factor(self) -> float:
-        if self._base_size.width() <= 0 or self._base_size.height() <= 0:
-            return 1.0
-
-        width_factor = self.width() / float(self._base_size.width())
-        height_factor = self.height() / float(self._base_size.height())
-        size_factor = max(1.0, width_factor, height_factor)
-
-        dpi_ratio = self._current_dpi_ratio()
-        if dpi_ratio <= 0:
-            dpi_ratio = 1.0
-
-        return max(1.0, size_factor / dpi_ratio)
-
-    def _current_dpi_ratio(self) -> float:
-        screen = None
-        handle = self.windowHandle()
-        if handle is not None:
-            screen = handle.screen()
-        if screen is None:
-            screen = QApplication.primaryScreen()
-        if screen is None:
-            return 1.0
-        return screen.logicalDotsPerInch() / BASE_LOGICAL_DPI
+    # 已移除字体缩放相关实现，缩放将仅由布局自动处理
 
 
 def run_gui() -> None:
