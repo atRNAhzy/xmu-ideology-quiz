@@ -31,7 +31,7 @@ https://github.com/atRNAhzy/xmu-ideology-quiz/releases/tag/v1.0.0
 ## 使用方法（Windows）
 
 1. 下载 [`XMU-Ideology-Quiz_v1.0.0.zip`](https://github.com/atRNAhzy/xmu-ideology-quiz/releases/tag/v1.0.0)
-2. 解压后双击运行 `XMU-Ideology-Quiz_v1.0.0.exe`
+2. 解压后双击运行 `XMU-Ideology-Quiz_v1.0.2.exe`
 3. 如被 SmartScreen 拦截：更多信息 → 仍要运行
 4. 选择题库开始刷题
 
